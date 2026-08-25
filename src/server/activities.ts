@@ -13,18 +13,10 @@ import { db } from "./db.js";
 import { requireSession } from "./auth.js";
 import { dashboardSummary } from "./analytics.js";
 import type { TimeGranularity } from "../shared/contracts.js";
+import { createRoutePreview } from "./routePreview.js";
 
 function value(metric: { value: number | null }) {
   return Number.isFinite(metric.value) ? metric.value : null;
-}
-
-function routePreview(activity: NormalizedCyclingActivityV1) {
-  const points = activity.route;
-  if (points.length <= 180) return points.map((point) => [point.longitude, point.latitude]);
-  const stride = Math.ceil(points.length / 180);
-  return points
-    .filter((_point, index) => index % stride === 0 || index === points.length - 1)
-    .map((point) => [point.longitude, point.latitude]);
 }
 
 function assertActivity(activity: NormalizedCyclingActivityV1) {
@@ -33,6 +25,29 @@ function assertActivity(activity: NormalizedCyclingActivityV1) {
     throw new Error("invalid_activity");
   }
   if (activity.route.length > 250_000) throw new Error("route_too_large");
+}
+
+function rebuildRoutePreviews() {
+  const migrationId = "geometry-aware-route-previews-v1";
+  if (db.prepare("SELECT 1 FROM data_migrations WHERE id = ?").get(migrationId)) return;
+  const rows = db.prepare(
+    `SELECT a.id, p.payload_gzip
+       FROM activities a
+       JOIN activity_payloads p ON p.activity_id = a.id
+      WHERE a.has_route = 1`,
+  ).all() as Array<{ id: string; payload_gzip: Buffer }>;
+
+  db.transaction(() => {
+    const update = db.prepare("UPDATE activities SET route_preview = ? WHERE id = ?");
+    for (const row of rows) {
+      const activity = JSON.parse(gunzipSync(row.payload_gzip).toString("utf8")) as NormalizedCyclingActivityV1;
+      update.run(JSON.stringify(createRoutePreview(activity.route)), row.id);
+    }
+    db.prepare("INSERT INTO data_migrations(id, applied_at) VALUES (?, ?)").run(
+      migrationId,
+      new Date().toISOString(),
+    );
+  })();
 }
 
 export function upsertActivity(
@@ -46,7 +61,7 @@ export function upsertActivity(
     .get(activity.sourceId) as { id: string; created_at: string } | undefined;
   const id = existing?.id ?? randomUUID();
   const now = new Date().toISOString();
-  const preview = routePreview(activity);
+  const preview = createRoutePreview(activity.route);
 
   const seenImportUpdate = updateImportMarker
     ? "seen_import_id=excluded.seen_import_id, updated_at=excluded.updated_at"
@@ -117,6 +132,8 @@ export function upsertActivity(
 }
 
 export async function registerActivityRoutes(app: FastifyInstance) {
+  rebuildRoutePreviews();
+
   app.post<{ Body: { expectedCount?: number; warnings?: string[] } }>(
     "/api/imports",
     { preHandler: requireSession },
