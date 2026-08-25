@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { NormalizedCyclingActivityV1 } from "../../shared/contracts";
 import { formatDate, formatDistance, formatDuration, formatElevation, formatSpeed } from "../lib/format";
@@ -13,7 +13,12 @@ export function ActivityDetail({ activity, onBack }: { activity: NormalizedCycli
   const [hoverIndex, setHoverIndex] = useState(0);
   const onHover = useCallback((index: number) => setHoverIndex(index), []);
   const hovered = activity.route[hoverIndex];
-  const route = activity.route.map((point) => [point.longitude, point.latitude] as [number, number]);
+  const route = useMemo(
+    () => activity.route.map((point) => [point.longitude, point.latitude] as [number, number]),
+    [activity.route],
+  );
+  const mapRoutes = useMemo(() => [route], [route]);
+  const speedRoutes = useMemo(() => [activity.route], [activity.route]);
   return (
     <section className="activity-page">
       <button className="back-button" onClick={onBack}>← Volver al resumen</button>
@@ -27,7 +32,7 @@ export function ActivityDetail({ activity, onBack }: { activity: NormalizedCycli
         </dl>
       </header>
       <div className="activity-map-wrap">
-        {route.length ? <RouteMap routes={[route]} activePoint={hovered ? [hovered.longitude, hovered.latitude] : null} /> : <div className="no-route-detail">Ruta no disponible para esta actividad</div>}
+        {route.length ? <RouteMap routes={mapRoutes} speedRoutes={speedRoutes} activePoint={hovered ? [hovered.longitude, hovered.latitude] : null} /> : <div className="no-route-detail">Ruta no disponible para esta actividad</div>}
       </div>
       {route.length > 1 && <RideChart points={activity.route} onHover={onHover} />}
       <section className="sensor-strip">

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { RoutePoint } from "../shared/contracts.js";
-import { createRoutePreview } from "./routePreview.js";
+import { createRoutePreview, createSpeedRoutePreview } from "./routePreview.js";
 
 function point(latitude: number, longitude: number): RoutePoint {
   return { latitude, longitude, elevationM: null, timestamp: null };
@@ -34,5 +34,24 @@ describe("route preview geometry", () => {
     expect(preview.length).toBeLessThanOrEqual(1_000);
     expect(preview[0]).toEqual([route[0].longitude, route[0].latitude]);
     expect(preview.at(-1)).toEqual([route.at(-1)!.longitude, route.at(-1)!.latitude]);
+  });
+
+  it("retains speed samples even when the route geometry is straight", () => {
+    const route = Array.from({ length: 500 }, (_value, index) => ({
+      ...point(41.4, 2.1 + index * 0.00001),
+      speedMps: 4 + index / 100,
+    }));
+    expect(createRoutePreview(route)).toHaveLength(2);
+    const speedPreview = createSpeedRoutePreview(route);
+    expect(speedPreview).toHaveLength(500);
+    expect(speedPreview[250].speedMps).toBe(6.5);
+  });
+
+  it("caps speed samples while keeping the first and last point", () => {
+    const route = Array.from({ length: 5_000 }, (_value, index) => point(41.4, 2.1 + index * 0.00001));
+    const preview = createSpeedRoutePreview(route);
+    expect(preview).toHaveLength(1_000);
+    expect(preview[0].longitude).toBe(route[0].longitude);
+    expect(preview.at(-1)!.longitude).toBe(route.at(-1)!.longitude);
   });
 });

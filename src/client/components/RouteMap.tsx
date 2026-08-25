@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
 import * as maplibregl from "maplibre-gl";
 import type { GeoJSONSource, LngLatBoundsLike, Map } from "maplibre-gl";
+import type { RouteSpeedPoint } from "../../shared/contracts";
+import { buildSpeedRoutes } from "../lib/routeSpeed";
 
 interface RouteMapProps {
   routes: Array<Array<[number, number]>>;
   heatCells?: Array<{ longitude: number; latitude: number; visits: number }>;
   activePoint?: [number, number] | null;
+  speedRoutes?: RouteSpeedPoint[][];
   compact?: boolean;
 }
 
@@ -35,9 +38,10 @@ const style: maplibregl.StyleSpecification = {
   ],
 };
 
-export function RouteMap({ routes, heatCells = [], activePoint, compact = false }: RouteMapProps) {
+export function RouteMap({ routes, heatCells = [], activePoint, speedRoutes, compact = false }: RouteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
+  const speedData = speedRoutes ? buildSpeedRoutes(speedRoutes) : null;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -76,11 +80,17 @@ export function RouteMap({ routes, heatCells = [], activePoint, compact = false 
         type: "geojson",
         data: {
           type: "FeatureCollection",
-          features: routes.map((coordinates, index) => ({
-            type: "Feature",
-            properties: { index },
-            geometry: { type: "LineString", coordinates },
-          })),
+          features: speedData
+            ? speedData.segments.map((segment, index) => ({
+                type: "Feature" as const,
+                properties: { index, speedMps: segment.speedMps ?? -1 },
+                geometry: { type: "LineString" as const, coordinates: segment.coordinates },
+              }))
+            : routes.map((coordinates, index) => ({
+                type: "Feature" as const,
+                properties: { index },
+                geometry: { type: "LineString" as const, coordinates },
+              })),
         },
       });
       map.addLayer({
@@ -95,7 +105,23 @@ export function RouteMap({ routes, heatCells = [], activePoint, compact = false 
         source: "routes",
         type: "line",
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#0788c2", "line-width": compact ? 3 : 4, "line-opacity": 1 },
+        paint: {
+          "line-color": speedData?.range
+            ? [
+                "case",
+                ["<", ["get", "speedMps"], 0],
+                "#0788c2",
+                [
+                  "interpolate", ["linear"], ["get", "speedMps"],
+                  speedData.range.low, "#2586d9",
+                  (speedData.range.low + speedData.range.high) / 2, "#d6e22e",
+                  speedData.range.high, "#ff6659",
+                ],
+              ]
+            : "#0788c2",
+          "line-width": compact ? 3 : 4,
+          "line-opacity": 1,
+        },
       });
       map.addSource("active-point", {
         type: "geojson",
@@ -125,7 +151,7 @@ export function RouteMap({ routes, heatCells = [], activePoint, compact = false 
       mapRef.current = null;
       map.remove();
     };
-  }, [compact, heatCells, routes]);
+  }, [compact, heatCells, routes, speedRoutes]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -139,5 +165,16 @@ export function RouteMap({ routes, heatCells = [], activePoint, compact = false 
     });
   }, [activePoint]);
 
-  return <div className={`route-map ${compact ? "route-map--compact" : ""}`} ref={containerRef} />;
+  return (
+    <div className={`route-map-shell ${compact ? "route-map-shell--compact" : ""}`}>
+      <div className={`route-map ${compact ? "route-map--compact" : ""}`} ref={containerRef} />
+      {speedData?.range && (
+        <div className="speed-legend" aria-label="Escala de velocidad de la ruta">
+          <span><b>Lento</b>{Math.round(speedData.range.low * 3.6)} km/h</span>
+          <i aria-hidden="true" />
+          <span><b>Rápido</b>{Math.round(speedData.range.high * 3.6)} km/h</span>
+        </div>
+      )}
+    </div>
+  );
 }

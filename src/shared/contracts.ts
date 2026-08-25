@@ -18,6 +18,13 @@ export interface RoutePoint {
   cadenceRpm?: number | null;
 }
 
+export interface RouteSpeedPoint {
+  latitude: number;
+  longitude: number;
+  speedMps?: number | null;
+  timestamp?: string | null;
+}
+
 export interface SensorSeriesPoint {
   timestamp: string;
   value: number;
@@ -83,6 +90,7 @@ export interface ActivitySummary {
   averageCadenceRpm: number | null;
   hasRoute: boolean;
   routePreview: Array<[number, number]>;
+  routeSpeedPreview: RouteSpeedPoint[];
 }
 
 export type TimeGranularity = "day" | "week" | "month" | "year";

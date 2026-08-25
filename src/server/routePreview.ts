@@ -1,4 +1,4 @@
-import type { RoutePoint } from "../shared/contracts.js";
+import type { RoutePoint, RouteSpeedPoint } from "../shared/contracts.js";
 
 const EARTH_RADIUS_M = 6_378_137;
 const INITIAL_TOLERANCE_M = 2;
@@ -56,8 +56,8 @@ function simplifyIndices(points: ProjectedPoint[], toleranceM: number) {
   return Array.from(keep, (value, index) => value ? index : -1).filter((index) => index >= 0);
 }
 
-export function createRoutePreview(route: RoutePoint[]) {
-  if (route.length <= 2) return route.map((point) => [point.longitude, point.latitude] as [number, number]);
+function previewIndices(route: RoutePoint[]) {
+  if (route.length <= 2) return route.map((_point, index) => index);
   const projected = route.map(project);
   let toleranceM = INITIAL_TOLERANCE_M;
   let indices = simplifyIndices(projected, toleranceM);
@@ -65,5 +65,23 @@ export function createRoutePreview(route: RoutePoint[]) {
     toleranceM *= 1.5;
     indices = simplifyIndices(projected, toleranceM);
   }
-  return indices.map((index) => [route[index].longitude, route[index].latitude] as [number, number]);
+  return indices;
+}
+
+export function createRoutePreview(route: RoutePoint[]) {
+  return previewIndices(route).map((index) => [route[index].longitude, route[index].latitude] as [number, number]);
+}
+
+export function createSpeedRoutePreview(route: RoutePoint[]): RouteSpeedPoint[] {
+  const indices = route.length <= MAX_PREVIEW_POINTS
+    ? route.map((_point, index) => index)
+    : Array.from({ length: MAX_PREVIEW_POINTS }, (_value, index) =>
+        Math.round(index * (route.length - 1) / (MAX_PREVIEW_POINTS - 1)),
+      );
+  return indices.map((index) => ({
+    latitude: route[index].latitude,
+    longitude: route[index].longitude,
+    speedMps: route[index].speedMps ?? null,
+    timestamp: route[index].timestamp,
+  }));
 }

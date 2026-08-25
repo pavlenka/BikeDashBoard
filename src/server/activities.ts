@@ -13,7 +13,7 @@ import { db } from "./db.js";
 import { requireSession } from "./auth.js";
 import { dashboardSummary } from "./analytics.js";
 import type { TimeGranularity } from "../shared/contracts.js";
-import { createRoutePreview } from "./routePreview.js";
+import { createRoutePreview, createSpeedRoutePreview } from "./routePreview.js";
 
 function value(metric: { value: number | null }) {
   return Number.isFinite(metric.value) ? metric.value : null;
@@ -50,6 +50,29 @@ function rebuildRoutePreviews() {
   })();
 }
 
+function rebuildSpeedRoutePreviews() {
+  const migrationId = "speed-route-previews-v2";
+  if (db.prepare("SELECT 1 FROM data_migrations WHERE id = ?").get(migrationId)) return;
+  const rows = db.prepare(
+    `SELECT a.id, p.payload_gzip
+       FROM activities a
+       JOIN activity_payloads p ON p.activity_id = a.id
+      WHERE a.has_route = 1`,
+  ).all() as Array<{ id: string; payload_gzip: Buffer }>;
+
+  db.transaction(() => {
+    const update = db.prepare("UPDATE activities SET route_speed_preview = ? WHERE id = ?");
+    for (const row of rows) {
+      const activity = JSON.parse(gunzipSync(row.payload_gzip).toString("utf8")) as NormalizedCyclingActivityV1;
+      update.run(JSON.stringify(createSpeedRoutePreview(activity.route)), row.id);
+    }
+    db.prepare("INSERT INTO data_migrations(id, applied_at) VALUES (?, ?)").run(
+      migrationId,
+      new Date().toISOString(),
+    );
+  })();
+}
+
 export function upsertActivity(
   importId: string,
   activity: NormalizedCyclingActivityV1,
@@ -62,6 +85,7 @@ export function upsertActivity(
   const id = existing?.id ?? randomUUID();
   const now = new Date().toISOString();
   const preview = createRoutePreview(activity.route);
+  const speedPreview = createSpeedRoutePreview(activity.route);
 
   const seenImportUpdate = updateImportMarker
     ? "seen_import_id=excluded.seen_import_id, updated_at=excluded.updated_at"
@@ -73,10 +97,10 @@ export function upsertActivity(
       duration_s, moving_time_s, distance_m, energy_kcal, elevation_gain_m,
       average_speed_mps, maximum_speed_mps, average_heart_rate_bpm,
       maximum_heart_rate_bpm, average_power_w, maximum_power_w,
-      average_cadence_rpm, maximum_cadence_rpm, has_route, route_preview,
+      average_cadence_rpm, maximum_cadence_rpm, has_route, route_preview, route_speed_preview,
       seen_import_id, created_at, updated_at
     ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     ) ON CONFLICT(source_id) DO UPDATE SET
       source_name=excluded.source_name, title=excluded.title, start_at=excluded.start_at,
       end_at=excluded.end_at, timezone=excluded.timezone, indoor=excluded.indoor,
@@ -91,6 +115,7 @@ export function upsertActivity(
       average_cadence_rpm=excluded.average_cadence_rpm,
       maximum_cadence_rpm=excluded.maximum_cadence_rpm,
       has_route=excluded.has_route, route_preview=excluded.route_preview,
+      route_speed_preview=excluded.route_speed_preview,
       ${seenImportUpdate}`,
   ).run(
     id,
@@ -116,6 +141,7 @@ export function upsertActivity(
     value(activity.maximumCadenceRpm),
     activity.route.length ? 1 : 0,
     JSON.stringify(preview),
+    JSON.stringify(speedPreview),
     importId,
     existing?.created_at ?? now,
     now,
@@ -133,6 +159,7 @@ export function upsertActivity(
 
 export async function registerActivityRoutes(app: FastifyInstance) {
   rebuildRoutePreviews();
+  rebuildSpeedRoutePreviews();
 
   app.post<{ Body: { expectedCount?: number; warnings?: string[] } }>(
     "/api/imports",
@@ -240,7 +267,8 @@ export async function registerActivityRoutes(app: FastifyInstance) {
             maximum_speed_mps maximumSpeedMps,
             average_heart_rate_bpm averageHeartRateBpm,
             average_power_w averagePowerW, average_cadence_rpm averageCadenceRpm,
-            has_route hasRoute, route_preview routePreview
+            has_route hasRoute, route_preview routePreview,
+            route_speed_preview routeSpeedPreview
            FROM activities ${clause} ORDER BY start_at DESC LIMIT ?`,
         )
         .all(...params) as Array<Record<string, unknown>>;
@@ -249,6 +277,7 @@ export async function registerActivityRoutes(app: FastifyInstance) {
         indoor: Boolean(row.indoor),
         hasRoute: Boolean(row.hasRoute),
         routePreview: JSON.parse(String(row.routePreview)),
+        routeSpeedPreview: JSON.parse(String(row.routeSpeedPreview)),
       }));
     },
   );

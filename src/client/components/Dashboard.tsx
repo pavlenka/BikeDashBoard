@@ -25,6 +25,8 @@ export function Dashboard({ summary, activities, onSelect, onImport }: { summary
     return { best, longest, change };
   }, [activities, chartSummary.series]);
   const latest = activities[0];
+  const latestMapRoutes = useMemo(() => latest?.hasRoute ? [latest.routePreview] : [], [latest]);
+  const latestSpeedRoutes = useMemo(() => latest?.hasRoute ? [latest.routeSpeedPreview] : [], [latest]);
   if (!activities.length) {
     return (
       <section className="empty-state">
@@ -40,7 +42,7 @@ export function Dashboard({ summary, activities, onSelect, onImport }: { summary
     <div className="dashboard-page">
       <section className="ride-hero">
         <div className="ride-hero__map">
-          <RouteMap routes={latest.hasRoute ? [latest.routePreview] : []} />
+          <RouteMap routes={latestMapRoutes} speedRoutes={latestSpeedRoutes} />
           {!latest.hasRoute && <div className="map-empty">Ruta no disponible</div>}
         </div>
         <div className="ride-hero__copy">

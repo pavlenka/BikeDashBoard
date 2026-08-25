@@ -115,6 +115,11 @@ db.exec(`
   );
 `);
 
+const activityColumns = db.prepare("PRAGMA table_info(activities)").all() as Array<{ name: string }>;
+if (!activityColumns.some((column) => column.name === "route_speed_preview")) {
+  db.exec("ALTER TABLE activities ADD COLUMN route_speed_preview TEXT NOT NULL DEFAULT '[]'");
+}
+
 db.prepare(
   `INSERT INTO analytics_preferences(id, timezone, updated_at)
    VALUES (1, 'Europe/Madrid', ?)
