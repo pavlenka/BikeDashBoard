@@ -25,7 +25,12 @@ const style: maplibregl.StyleSpecification = {
       id: "osm",
       type: "raster",
       source: "osm",
-      paint: { "raster-saturation": -0.65, "raster-contrast": -0.08, "raster-brightness-max": 0.92 },
+      paint: {
+        "raster-saturation": 0.12,
+        "raster-contrast": 0.24,
+        "raster-brightness-min": 0.03,
+        "raster-brightness-max": 1,
+      },
     },
   ],
 };
@@ -90,7 +95,7 @@ export function RouteMap({ routes, heatCells = [], activePoint, compact = false 
         source: "routes",
         type: "line",
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#146c94", "line-width": compact ? 3 : 4, "line-opacity": 0.95 },
+        paint: { "line-color": "#0788c2", "line-width": compact ? 3 : 4, "line-opacity": 1 },
       });
       map.addSource("active-point", {
         type: "geojson",
