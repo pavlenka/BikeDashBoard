@@ -68,7 +68,7 @@ export function EvolutionChart({ data, previous, metric, granularity, goalTarget
         { type: "value", show: false },
       ],
       series: [
-        { name: info.label, type: "bar", data: values, barMaxWidth: 34, itemStyle: { color: "#27a8df" }, emphasis: { itemStyle: { color: "#d6e22e" } }, markLine: average === null ? undefined : { silent: true, symbol: "none", lineStyle: { color: "#eef3f4", type: "dashed", width: 1.25, opacity: 0.85 }, label: { color: "#eef3f4", fontFamily: "IBM Plex Mono", fontSize: 10, formatter: `Media ${average.toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${info.unit}` }, data: [{ yAxis: average }] } },
+        { name: info.label, type: "bar", data: values, barMaxWidth: 34, itemStyle: { color: "#27a8df" }, emphasis: { itemStyle: { color: "#d6e22e" } }, markLine: average === null ? undefined : { silent: true, symbol: "none", lineStyle: { color: "#eef3f4", type: "dashed", width: 1.25, opacity: 0.85 }, label: { position: "insideStartTop", distance: 5, color: "#eef3f4", fontFamily: "IBM Plex Mono", fontSize: 10, formatter: `Media ${average.toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${info.unit}` }, data: [{ yAxis: average }] } },
         { name: "Periodo anterior", type: "line", data: data.map((_point, index) => previousValues[index] ?? null), showSymbol: false, lineStyle: { color: "#77868d", type: "dashed", width: 1.5 } },
         ...(metric === "distanceM" || metric === "durationS" || metric === "elevationGainM" || metric === "rides" ? [{ name: "Acumulado", type: "line" as const, yAxisIndex: 1, data: cumulative, showSymbol: false, lineStyle: { color: "#d6e22e", width: 2.5 }, areaStyle: { color: "rgba(214,226,46,.05)" } }] : []),
         ...(transformedGoal ? [{ name: "Objetivo", type: "line" as const, yAxisIndex: 1, data: data.map((_point, index) => transformedGoal * (index + 1) / Math.max(1, data.length)), showSymbol: false, lineStyle: { color: "#eef3f4", width: 1, type: "dotted" as const } }] : []),
@@ -89,7 +89,7 @@ export function PerformanceScatter({ points, onSelect }: { points: AnalyticsOver
     chart.setOption({
       animationDuration: 300,
       grid: { left: 52, right: 24, top: 24, bottom: 42 },
-      tooltip: { formatter: (item: unknown) => { const value = (item as { value: number[] }).value; return `<strong>${value[1]} ppm</strong><br>${value[0].toLocaleString("es-ES", { maximumFractionDigits: 1 })} km/h · ${value[2].toLocaleString("es-ES", { maximumFractionDigits: 1 })} km`; } },
+      tooltip: { formatter: (item: unknown) => { const value = (item as { value: number[] }).value; return `<strong>${Math.round(value[1]).toLocaleString("es-ES")} ppm</strong><br>${value[0].toLocaleString("es-ES", { maximumFractionDigits: 1 })} km/h · ${value[2].toLocaleString("es-ES", { maximumFractionDigits: 1 })} km`; } },
       xAxis: { type: "value", name: "km/h", nameTextStyle: { color: "#95a4aa" }, axisLabel: { color: "#95a4aa" }, splitLine: { lineStyle: { color: "#2d383e" } } },
       yAxis: { type: "value", name: "ppm", nameTextStyle: { color: "#95a4aa" }, axisLabel: { color: "#95a4aa" }, splitLine: { lineStyle: { color: "#2d383e" } } },
       series: [{

@@ -594,7 +594,7 @@ function overview(query: {
     insights.push(`${label.charAt(0).toUpperCase()}${label.slice(1)} es tu mes más largo del periodo, con ${(bestMonth.distanceM / 1000).toLocaleString("es-ES", { maximumFractionDigits: 1 })} km.`);
   }
   const newCells = [...selectedCells.keys()].filter((cell) => !historicCells.has(cell)).length;
-  if (newCells > 0) insights.push(`Has abierto ${newCells.toLocaleString("es-ES")} celdas nuevas de territorio.`);
+  if (newCells > 0) insights.push(`Has recorrido ${newCells.toLocaleString("es-ES")} zonas nuevas del mapa que no aparecían en tu historial anterior.`);
   const distanceGoal = goalValues.find((goal) => goal.distanceM);
   if (distanceGoal?.distanceM && distanceGoal.elapsedRatio > 0) {
     const pace = distanceGoal.actual.distanceM / distanceGoal.distanceM - distanceGoal.elapsedRatio;

@@ -62,7 +62,7 @@ export function RideChart({ points, onHover }: { points: RoutePoint[]; onHover: 
             silent: true,
             symbol: "none",
             lineStyle: { color: "#eef3f4", type: "dashed", width: 1.25, opacity: 0.85 },
-            label: { color: "#eef3f4", fontFamily: "IBM Plex Mono", fontSize: 10, formatter: `Media ${average.toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${metrics[metric].unit}` },
+            label: { position: "insideStartTop", distance: 5, color: "#eef3f4", fontFamily: "IBM Plex Mono", fontSize: 10, formatter: `Media ${average.toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${metrics[metric].unit}` },
             data: [{ yAxis: average }],
           },
         },

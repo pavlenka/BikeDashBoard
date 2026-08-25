@@ -316,6 +316,10 @@ h2 { font-size: 32px; line-height: 1; letter-spacing: -.015em; }
 .exploration-copy dl div { padding: 15px 0; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: baseline; }
 .exploration-copy dt { color: var(--graphite); font-size: 11px; }
 .exploration-copy dd { margin: 0; font-family: "Barlow Condensed"; font-size: 27px; }
+.territory-explainer { padding: 16px; margin-bottom: 16px; border-left: 3px solid var(--signal); background: rgba(214, 226, 46, .055); }
+.territory-explainer strong { display: block; margin-bottom: 8px; color: var(--ink); font-family: "IBM Plex Mono"; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.territory-explainer p { margin: 7px 0; color: var(--graphite); font-size: 12px; line-height: 1.5; }
+.territory-explainer b { color: var(--signal); font-weight: 500; }
 .exploration-copy > p:last-child { color: var(--graphite); font-size: 11px; line-height: 1.5; }
 .coverage-ledger { display: grid; grid-template-columns: 180px repeat(9, 1fr); border-left: 1px solid var(--rule); margin-top: 20px; overflow-x: auto; }
 .coverage-ledger > span, .coverage-ledger > div { min-width: 95px; padding: 14px; border-top: 1px solid var(--rule); border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }

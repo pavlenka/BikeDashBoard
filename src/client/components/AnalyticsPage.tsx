@@ -235,7 +235,21 @@ export function AnalyticsPage({ activities, onSelect, onConfigure }: { activitie
 
         <section className="exploration-section">
           <div className="exploration-map"><RouteMap routes={[]} heatCells={overview.exploration.heatCells} /></div>
-          <div className="exploration-copy"><p className="eyebrow">GPS y exploración</p><h2>Tu territorio</h2><dl><div><dt>Kilómetros con GPS</dt><dd>{formatDistance(overview.exploration.gpsDistanceM)}</dd></div><div><dt>Celdas recorridas</dt><dd>{overview.exploration.cells.toLocaleString("es-ES")}</dd></div><div><dt>Territorio nuevo</dt><dd>+{overview.exploration.newCells.toLocaleString("es-ES")}</dd></div></dl><p>Cada celda representa aproximadamente 250 metros. El brillo indica cuántas salidas han pasado por allí.</p></div>
+          <div className="exploration-copy">
+            <p className="eyebrow">GPS y exploración</p>
+            <h2>Tu territorio</h2>
+            <dl>
+              <div><dt>Kilómetros con GPS</dt><dd>{formatDistance(overview.exploration.gpsDistanceM)}</dd></div>
+              <div><dt>Zonas del mapa recorridas</dt><dd>{overview.exploration.cells.toLocaleString("es-ES")}</dd></div>
+              <div><dt>Zonas nuevas en este periodo</dt><dd>+{overview.exploration.newCells.toLocaleString("es-ES")}</dd></div>
+            </dl>
+            <div className="territory-explainer">
+              <strong>¿Qué es una zona?</strong>
+              <p>Dividimos el mapa en cuadrados aproximados de 250 × 250 m. Cada cuadrado cuenta una sola vez, aunque pases por él varias veces.</p>
+              <p><b>+{overview.exploration.newCells.toLocaleString("es-ES")}</b> significa que, en el periodo seleccionado, has recorrido esa cantidad de cuadrados que no aparecían en ninguna salida anterior.</p>
+            </div>
+            <p>En el mapa, más brillo significa que has pasado por esa zona en más salidas.</p>
+          </div>
         </section>
 
         <footer className="coverage-ledger"><span>COBERTURA DEL PERIODO</span>{Object.entries(overview.coverage).filter(([key]) => key !== "rides").map(([key, value]) => <div key={key}><strong>{key === "heartRate" ? "Pulso" : key === "movingTime" ? "Movimiento" : key === "route" ? "GPS" : key === "elevation" ? "Desnivel" : key === "energy" ? "Energía" : key === "power" ? "Potencia" : key === "cadence" ? "Cadencia" : key === "speed" ? "Velocidad" : key === "distance" ? "Distancia" : "Duración"}</strong><small>{value}/{overview.coverage.rides}</small></div>)}</footer>

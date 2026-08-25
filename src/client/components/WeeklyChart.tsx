@@ -54,7 +54,8 @@ export function PeriodChart({ data, granularity }: { data: PeriodSeriesPoint[]; 
             lineStyle: { color: "#eef3f4", type: "dashed", width: 1.25, opacity: 0.85 },
             label: {
               show: true,
-              position: "insideEndTop",
+              position: "insideStartTop",
+              distance: 5,
               color: "#eef3f4",
               fontFamily: "IBM Plex Mono",
               fontSize: 10,
