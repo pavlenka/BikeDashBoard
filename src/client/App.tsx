@@ -15,6 +15,7 @@ import { AuthScreen } from "./components/AuthScreen";
 import { Dashboard } from "./components/Dashboard";
 import { ImportPanel } from "./components/ImportPanel";
 import { RoutesView } from "./components/RoutesView";
+import { RoadBikeMark } from "./components/RoadBikeMark";
 import { SettingsPage } from "./components/SettingsPage";
 
 type View = "dashboard" | "analytics" | "routes" | "import" | "settings";
@@ -98,7 +99,7 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <button className="wordmark" onClick={() => { setView("dashboard"); setSelected(null); }}><span>BD</span><strong>Bike Dashboard</strong></button>
+        <button className="wordmark" onClick={() => { setView("dashboard"); setSelected(null); }}><span>BD</span><RoadBikeMark /><strong>Bike Dashboard</strong></button>
         <nav aria-label="Principal">
           <button className={view === "dashboard" && !selected ? "active" : ""} onClick={() => { setView("dashboard"); setSelected(null); }}>Resumen</button>
           <button className={view === "analytics" && !selected ? "active" : ""} onClick={() => { setView("analytics"); setSelected(null); }}>Análisis</button>

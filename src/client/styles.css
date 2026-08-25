@@ -40,6 +40,10 @@ button:focus-visible, input:focus-visible, label:has(input:focus-visible) { outl
 }
 .wordmark { border: 0; background: none; display: flex; align-items: center; gap: 12px; padding: 0; cursor: pointer; justify-self: start; }
 .wordmark span { width: 34px; height: 34px; display: grid; place-items: center; color: var(--asphalt); background: var(--signal); font-family: "Barlow Condensed"; font-weight: 600; letter-spacing: .05em; transform: skew(-7deg); }
+.road-bike-mark { width: 54px; height: 30px; overflow: visible; color: var(--route-dark); fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; transition: transform .2s ease, color .2s ease; }
+.road-bike-mark__bar, .road-bike-mark__seat { stroke: var(--ink); stroke-width: 2; }
+.road-bike-mark__crank { stroke: var(--signal); }
+.wordmark:hover .road-bike-mark, .wordmark:focus-visible .road-bike-mark { color: var(--route); transform: translateX(2px); }
 .wordmark strong { font-family: "Barlow Condensed"; font-size: 20px; font-weight: 600; letter-spacing: .02em; }
 .topbar nav { display: flex; gap: 6px; }
 .topbar nav button { border: 0; background: transparent; padding: 10px 16px; color: var(--graphite); cursor: pointer; position: relative; }
