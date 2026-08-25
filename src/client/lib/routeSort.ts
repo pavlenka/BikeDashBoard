@@ -1,7 +1,7 @@
 import type { ActivitySummary } from "../../shared/contracts";
 
 export type RouteSortDirection = "asc" | "desc";
-export type RouteSortKey = "startAt" | "title" | "distanceM" | "durationS" | "elevationGainM" | "averageSpeedMps" | "averageHeartRateBpm" | "averagePowerW";
+export type RouteSortKey = "startAt" | "title" | "distanceM" | "durationS" | "elevationGainM" | "averageSpeedMps" | "maximumSpeedMps" | "averageHeartRateBpm" | "averagePowerW";
 
 const collator = new Intl.Collator("es-ES", { numeric: true, sensitivity: "base" });
 

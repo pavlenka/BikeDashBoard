@@ -18,6 +18,11 @@ describe("sortRoutes", () => {
     expect(sortRoutes(routes, "averagePowerW", "desc").map(({ id }) => id)).toEqual(["high", "low", "missing"]);
   });
 
+  it("sorts routes by maximum speed", () => {
+    const routes = [route("medium"), route("fast", { maximumSpeedMps: 18 }), route("slow", { maximumSpeedMps: 7 })];
+    expect(sortRoutes(routes, "maximumSpeedMps", "desc").map(({ id }) => id)).toEqual(["fast", "medium", "slow"]);
+  });
+
   it("sorts titles using Spanish collation", () => {
     const routes = [route("z", { title: "Zaragoza" }), route("a", { title: "Ávila" })];
     expect(sortRoutes(routes, "title", "asc").map(({ id }) => id)).toEqual(["a", "z"]);

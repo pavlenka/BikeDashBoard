@@ -157,7 +157,7 @@ h2 { font-size: 32px; line-height: 1; letter-spacing: -.015em; }
 .route-ledger__heading h2 { margin: 0; font-size: 38px; }
 .route-ledger__heading > p { margin: 0; color: var(--graphite); font-family: "IBM Plex Mono"; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
 .route-table-wrap { overflow-x: auto; }
-.route-table { width: 100%; min-width: 1120px; border-collapse: collapse; }
+.route-table { width: 100%; min-width: 1240px; border-collapse: collapse; }
 .route-table th { padding: 0; border-bottom: 1px solid var(--rule); background: #10171b; text-align: left; }
 .route-table th button { width: 100%; min-height: 48px; padding: 0 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; background: transparent; color: var(--graphite); cursor: pointer; font-family: "IBM Plex Mono"; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
 .route-table th button:hover { color: var(--ink); background: #162027; }

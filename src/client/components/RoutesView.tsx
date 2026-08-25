@@ -11,6 +11,7 @@ const columns: Array<{ key: RouteSortKey; label: string; align?: "right" }> = [
   { key: "durationS", label: "Tiempo", align: "right" },
   { key: "elevationGainM", label: "Desnivel", align: "right" },
   { key: "averageSpeedMps", label: "Vel. media", align: "right" },
+  { key: "maximumSpeedMps", label: "Vel. máxima", align: "right" },
   { key: "averageHeartRateBpm", label: "Pulso", align: "right" },
   { key: "averagePowerW", label: "Potencia", align: "right" },
 ];
@@ -73,6 +74,7 @@ export function RoutesView({ activities, onSelect }: { activities: ActivitySumma
                   <td className="numeric">{formatDuration(activity.durationS)}</td>
                   <td className="numeric">{formatElevation(activity.elevationGainM)}</td>
                   <td className="numeric">{formatSpeed(activity.averageSpeedMps)}</td>
+                  <td className="numeric">{formatSpeed(activity.maximumSpeedMps)}</td>
                   <td className="numeric">{formatInteger(activity.averageHeartRateBpm, "ppm")}</td>
                   <td className="numeric">{formatInteger(activity.averagePowerW, "W")}</td>
                   <td className="route-table__open"><button type="button" onClick={() => onSelect(activity.id)} aria-label={`Abrir ${activity.title}`}>→</button></td>
