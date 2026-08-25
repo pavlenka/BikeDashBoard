@@ -1,0 +1,42 @@
+services:
+  bike-dashboard:
+    build:
+      context: .
+    image: bike-dashboard:latest
+    container_name: bike-dashboard
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3001
+      DATABASE_PATH: /app/data/bike-dashboard.sqlite
+      BACKUP_DIR: /app/backups
+      RP_ID: ${BIKE_DOMAIN:?Set BIKE_DOMAIN}
+      RP_NAME: Bike Dashboard
+      RP_ORIGIN: https://${BIKE_DOMAIN:?Set BIKE_DOMAIN}
+      SESSION_DAYS: 30
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    volumes:
+      - ../data:/app/data
+      - ../backups:/app/backups
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-traefik}
+      - traefik.http.routers.bike-dashboard.rule=Host(`${BIKE_DOMAIN:?Set BIKE_DOMAIN}`)
+      - traefik.http.routers.bike-dashboard.entrypoints=web,websecure
+      - traefik.http.routers.bike-dashboard.tls=true
+      - traefik.http.routers.bike-dashboard.tls.certresolver=letsencrypt
+      - traefik.http.services.bike-dashboard.loadbalancer.server.port=3001
+
+networks:
+  traefik:
+    name: ${TRAEFIK_NETWORK:-traefik}
+    external: true
