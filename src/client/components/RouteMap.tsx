@@ -9,8 +9,11 @@ interface RouteMapProps {
   heatCells?: Array<{ longitude: number; latitude: number; visits: number }>;
   activePoint?: [number, number] | null;
   speedRoutes?: RouteSpeedPoint[][];
+  averageSpeeds?: Array<number | null>;
   compact?: boolean;
 }
+
+const EMPTY_HEAT_CELLS: NonNullable<RouteMapProps["heatCells"]> = [];
 
 const style: maplibregl.StyleSpecification = {
   version: 8,
@@ -38,10 +41,10 @@ const style: maplibregl.StyleSpecification = {
   ],
 };
 
-export function RouteMap({ routes, heatCells = [], activePoint, speedRoutes, compact = false }: RouteMapProps) {
+export function RouteMap({ routes, heatCells = EMPTY_HEAT_CELLS, activePoint, speedRoutes, averageSpeeds, compact = false }: RouteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
-  const speedData = speedRoutes ? buildSpeedRoutes(speedRoutes) : null;
+  const speedData = speedRoutes ? buildSpeedRoutes(speedRoutes, averageSpeeds) : null;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -125,7 +128,12 @@ export function RouteMap({ routes, heatCells = [], activePoint, speedRoutes, com
       });
       map.addSource("active-point", {
         type: "geojson",
-        data: { type: "FeatureCollection", features: [] },
+        data: {
+          type: "FeatureCollection",
+          features: activePoint
+            ? [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: activePoint } }]
+            : [],
+        },
       });
       map.addLayer({
         id: "active-point",
@@ -151,7 +159,7 @@ export function RouteMap({ routes, heatCells = [], activePoint, speedRoutes, com
       mapRef.current = null;
       map.remove();
     };
-  }, [compact, heatCells, routes, speedRoutes]);
+  }, [averageSpeeds, compact, heatCells, routes, speedRoutes]);
 
   useEffect(() => {
     const map = mapRef.current;

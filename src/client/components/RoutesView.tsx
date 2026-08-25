@@ -7,13 +7,14 @@ export function RoutesView({ activities, onSelect }: { activities: ActivitySumma
   const routed = activities.filter((activity) => activity.hasRoute);
   const mapRoutes = useMemo(() => routed.map((activity) => activity.routePreview), [activities]);
   const speedRoutes = useMemo(() => routed.map((activity) => activity.routeSpeedPreview), [activities]);
+  const averageSpeeds = useMemo(() => routed.map((activity) => activity.averageSpeedMps), [activities]);
   return (
     <section className="routes-page">
       <header className="page-heading page-heading--inline">
         <div><p className="eyebrow">Atlas personal</p><h1>Todas tus rutas</h1></div>
         <p>{routed.length} trazados con GPS</p>
       </header>
-      <div className="atlas-map"><RouteMap routes={mapRoutes} speedRoutes={speedRoutes} /></div>
+      <div className="atlas-map"><RouteMap routes={mapRoutes} speedRoutes={speedRoutes} averageSpeeds={averageSpeeds} /></div>
       <div className="route-index">
         {routed.map((activity) => (
           <button key={activity.id} onClick={() => onSelect(activity.id)}>

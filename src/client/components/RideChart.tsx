@@ -33,7 +33,14 @@ export function RideChart({ points, onHover }: { points: RoutePoint[]; onHover: 
       animation: false,
       backgroundColor: "transparent",
       grid: { left: 52, right: 34, top: 18, bottom: 34 },
-      tooltip: { trigger: "axis", confine: true },
+      tooltip: {
+        trigger: "axis",
+        confine: true,
+        valueFormatter: (value: unknown) => {
+          const numeric = Number(value);
+          return Number.isFinite(numeric) ? `${Math.round(numeric).toLocaleString("es-ES")} ${metrics[metric].unit}` : "—";
+        },
+      },
       xAxis: {
         type: "category",
         data: labels,

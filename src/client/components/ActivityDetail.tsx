@@ -19,6 +19,7 @@ export function ActivityDetail({ activity, onBack }: { activity: NormalizedCycli
   );
   const mapRoutes = useMemo(() => [route], [route]);
   const speedRoutes = useMemo(() => [activity.route], [activity.route]);
+  const averageSpeeds = useMemo(() => [activity.averageSpeedMps.value], [activity.averageSpeedMps.value]);
   return (
     <section className="activity-page">
       <button className="back-button" onClick={onBack}>← Volver al resumen</button>
@@ -32,7 +33,7 @@ export function ActivityDetail({ activity, onBack }: { activity: NormalizedCycli
         </dl>
       </header>
       <div className="activity-map-wrap">
-        {route.length ? <RouteMap routes={mapRoutes} speedRoutes={speedRoutes} activePoint={hovered ? [hovered.longitude, hovered.latitude] : null} /> : <div className="no-route-detail">Ruta no disponible para esta actividad</div>}
+        {route.length ? <RouteMap routes={mapRoutes} speedRoutes={speedRoutes} averageSpeeds={averageSpeeds} activePoint={hovered ? [hovered.longitude, hovered.latitude] : null} /> : <div className="no-route-detail">Ruta no disponible para esta actividad</div>}
       </div>
       {route.length > 1 && <RideChart points={activity.route} onHover={onHover} />}
       <section className="sensor-strip">

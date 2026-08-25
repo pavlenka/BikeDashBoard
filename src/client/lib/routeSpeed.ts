@@ -2,9 +2,10 @@ import type { RouteSpeedPoint } from "../../shared/contracts";
 
 const EARTH_RADIUS_M = 6_378_137;
 const MAX_CYCLING_SPEED_MPS = 120 / 3.6;
+const MAX_SPEED_SEGMENTS_PER_ROUTE = 800;
 
 export interface SpeedSegment {
-  coordinates: [[number, number], [number, number]];
+  coordinates: Array<[number, number]>;
   speedMps: number | null;
 }
 
@@ -42,14 +43,39 @@ function percentile(sorted: number[], ratio: number) {
   return sorted[lower] + ((sorted[lower + 1] ?? sorted[lower]) - sorted[lower]) * remainder;
 }
 
-export function buildSpeedSegments(points: RouteSpeedPoint[]) {
+export function buildSpeedSegments(points: RouteSpeedPoint[], fallbackAverageSpeedMps?: number | null) {
   const segments: SpeedSegment[] = [];
-  for (let index = 1; index < points.length; index += 1) {
-    const previous = points[index - 1];
-    const point = points[index];
+  const pointSpeeds = points.slice(1).map((point, index) => segmentSpeed(points[index], point));
+  if (
+    !pointSpeeds.some((speed) => speed !== null) &&
+    fallbackAverageSpeedMps !== null &&
+    fallbackAverageSpeedMps !== undefined &&
+    Number.isFinite(fallbackAverageSpeedMps) &&
+    fallbackAverageSpeedMps > 0
+  ) {
+    const distances = points.slice(1).map((point, index) => haversineDistance(points[index], point));
+    const averageDistance = distances.reduce((total, distance) => total + distance, 0) / distances.length;
+    if (averageDistance > 0) {
+      distances.forEach((distance, index) => {
+        pointSpeeds[index] = validSpeed(distance / averageDistance * fallbackAverageSpeedMps);
+      });
+    }
+  }
+  const chunkSize = Math.max(1, Math.ceil((points.length - 1) / MAX_SPEED_SEGMENTS_PER_ROUTE));
+  for (let firstIndex = 1; firstIndex < points.length; firstIndex += chunkSize) {
+    const lastIndex = Math.min(points.length - 1, firstIndex + chunkSize - 1);
+    const chunkSpeeds: number[] = [];
+    for (let index = firstIndex; index <= lastIndex; index += 1) {
+      const speed = pointSpeeds[index - 1];
+      if (speed !== null) chunkSpeeds.push(speed);
+    }
     segments.push({
-      coordinates: [[previous.longitude, previous.latitude], [point.longitude, point.latitude]],
-      speedMps: segmentSpeed(previous, point),
+      coordinates: points
+        .slice(firstIndex - 1, lastIndex + 1)
+        .map((point) => [point.longitude, point.latitude] as [number, number]),
+      speedMps: chunkSpeeds.length
+        ? chunkSpeeds.reduce((total, speed) => total + speed, 0) / chunkSpeeds.length
+        : null,
     });
   }
   const speeds = segments
@@ -67,8 +93,8 @@ export function buildSpeedSegments(points: RouteSpeedPoint[]) {
   };
 }
 
-export function buildSpeedRoutes(routes: RouteSpeedPoint[][]) {
-  const segments = routes.flatMap((route) => buildSpeedSegments(route).segments);
+export function buildSpeedRoutes(routes: RouteSpeedPoint[][], fallbackAverageSpeeds: Array<number | null> = []) {
+  const segments = routes.flatMap((route, index) => buildSpeedSegments(route, fallbackAverageSpeeds[index]).segments);
   const speeds = segments
     .map((segment) => segment.speedMps)
     .filter((speed): speed is number => speed !== null)
