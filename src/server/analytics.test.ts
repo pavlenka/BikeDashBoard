@@ -8,6 +8,7 @@ import {
   localDateParts,
   periodStart,
   routeCells,
+  spanishPeriodLabel,
   type ActivityRow,
 } from "./analytics.js";
 
@@ -42,6 +43,11 @@ describe("analytics calendar", () => {
 
   it("groups using Madrid local time across daylight saving", () => {
     expect(localDateParts("2026-03-29T22:30:00Z", "Europe/Madrid")).toMatchObject({ year: 2026, month: 3, day: 30, hour: 0 });
+  });
+
+  it("presents stored periods as Spanish calendar labels", () => {
+    expect(spanishPeriodLabel("2026-07")).toBe("julio de 2026");
+    expect(spanishPeriodLabel("2026")).toBe("2026");
   });
 });
 

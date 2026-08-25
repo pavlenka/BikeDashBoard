@@ -1,12 +1,13 @@
 import { useEffect, useRef } from "react";
 import * as echarts from "echarts/core";
 import { BarChart, LineChart, ScatterChart } from "echarts/charts";
-import { GridComponent, LegendComponent, TooltipComponent } from "echarts/components";
+import { GridComponent, LegendComponent, MarkLineComponent, TooltipComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 
-import type { AnalyticsOverview, PeriodSeriesPoint } from "../../shared/contracts";
+import type { AnalyticsOverview, PeriodSeriesPoint, TimeGranularity } from "../../shared/contracts";
+import { formatPeriod, formatPeriodLabel } from "../lib/format";
 
-echarts.use([BarChart, LineChart, ScatterChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer]);
+echarts.use([BarChart, LineChart, ScatterChart, GridComponent, LegendComponent, MarkLineComponent, TooltipComponent, CanvasRenderer]);
 
 export type EvolutionMetric = "distanceM" | "durationS" | "elevationGainM" | "rides" | "energyKcal" | "averageSpeedMps" | "maximumSpeedMps" | "averageHeartRateBpm" | "trainingLoad";
 
@@ -22,7 +23,7 @@ const metricInfo: Record<EvolutionMetric, { label: string; unit: string; transfo
   trainingLoad: { label: "Carga", unit: "pts", transform: (value) => value },
 };
 
-export function EvolutionChart({ data, previous, metric, goalTarget }: { data: PeriodSeriesPoint[]; previous: PeriodSeriesPoint[]; metric: EvolutionMetric; goalTarget?: number | null }) {
+export function EvolutionChart({ data, previous, metric, granularity, goalTarget }: { data: PeriodSeriesPoint[]; previous: PeriodSeriesPoint[]; metric: EvolutionMetric; granularity: TimeGranularity; goalTarget?: number | null }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!ref.current) return;
@@ -36,6 +37,8 @@ export function EvolutionChart({ data, previous, metric, goalTarget }: { data: P
       const raw = point[metric];
       return raw === null ? null : Number(info.transform(raw).toFixed(2));
     });
+    const numericValues = values.filter((value): value is number => value !== null);
+    const average = numericValues.length ? numericValues.reduce((total, value) => total + value, 0) / numericValues.length : null;
     let running = 0;
     const cumulative = values.map((value) => {
       running += value ?? 0;
@@ -47,14 +50,25 @@ export function EvolutionChart({ data, previous, metric, goalTarget }: { data: P
       backgroundColor: "transparent",
       grid: { left: 54, right: 48, top: 42, bottom: 38 },
       legend: { top: 0, right: 0, textStyle: { color: "#95a4aa", fontFamily: "IBM Plex Mono", fontSize: 10 } },
-      tooltip: { trigger: "axis", confine: true, valueFormatter: (value: unknown) => `${Number(value).toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${info.unit}` },
-      xAxis: { type: "category", data: data.map((point) => point.periodStart), axisTick: { show: false }, axisLine: { lineStyle: { color: "#46545b" } }, axisLabel: { color: "#95a4aa", fontFamily: "IBM Plex Mono", hideOverlap: true } },
+      tooltip: {
+        trigger: "axis",
+        confine: true,
+        formatter: (items: unknown) => {
+          const entries = items as Array<{ dataIndex: number; marker: string; seriesName: string; value: number | null }>;
+          const point = data[entries[0]?.dataIndex];
+          const lines = entries
+            .filter((entry) => entry.value !== null && entry.value !== undefined)
+            .map((entry) => `${entry.marker}${entry.seriesName}: <strong>${Number(entry.value).toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${info.unit}</strong>`);
+          return `${point ? formatPeriodLabel(point.periodStart, granularity) : ""}<br>${lines.join("<br>")}`;
+        },
+      },
+      xAxis: { type: "category", data: data.map((point) => formatPeriod(point.periodStart, granularity, true)), axisTick: { show: false }, axisLine: { lineStyle: { color: "#46545b" } }, axisLabel: { color: "#95a4aa", fontFamily: "IBM Plex Mono", hideOverlap: true } },
       yAxis: [
         { type: "value", name: info.unit, nameTextStyle: { color: "#95a4aa" }, axisLabel: { color: "#95a4aa", fontFamily: "IBM Plex Mono" }, splitLine: { lineStyle: { color: "#2d383e" } } },
         { type: "value", show: false },
       ],
       series: [
-        { name: info.label, type: "bar", data: values, barMaxWidth: 34, itemStyle: { color: "#27a8df" }, emphasis: { itemStyle: { color: "#d6e22e" } } },
+        { name: info.label, type: "bar", data: values, barMaxWidth: 34, itemStyle: { color: "#27a8df" }, emphasis: { itemStyle: { color: "#d6e22e" } }, markLine: average === null ? undefined : { silent: true, symbol: "none", lineStyle: { color: "#eef3f4", type: "dashed", width: 1.25, opacity: 0.85 }, label: { color: "#eef3f4", fontFamily: "IBM Plex Mono", fontSize: 10, formatter: `Media ${average.toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${info.unit}` }, data: [{ yAxis: average }] } },
         { name: "Periodo anterior", type: "line", data: data.map((_point, index) => previousValues[index] ?? null), showSymbol: false, lineStyle: { color: "#77868d", type: "dashed", width: 1.5 } },
         ...(metric === "distanceM" || metric === "durationS" || metric === "elevationGainM" || metric === "rides" ? [{ name: "Acumulado", type: "line" as const, yAxisIndex: 1, data: cumulative, showSymbol: false, lineStyle: { color: "#d6e22e", width: 2.5 }, areaStyle: { color: "rgba(214,226,46,.05)" } }] : []),
         ...(transformedGoal ? [{ name: "Objetivo", type: "line" as const, yAxisIndex: 1, data: data.map((_point, index) => transformedGoal * (index + 1) / Math.max(1, data.length)), showSymbol: false, lineStyle: { color: "#eef3f4", width: 1, type: "dotted" as const } }] : []),
@@ -63,7 +77,7 @@ export function EvolutionChart({ data, previous, metric, goalTarget }: { data: P
     const observer = new ResizeObserver(() => chart.resize());
     observer.observe(ref.current);
     return () => { observer.disconnect(); chart.dispose(); };
-  }, [data, goalTarget, metric, previous]);
+  }, [data, goalTarget, granularity, metric, previous]);
   return <div className="analytics-evolution" ref={ref} />;
 }
 

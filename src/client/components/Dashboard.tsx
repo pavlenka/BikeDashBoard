@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { ActivitySummary, DashboardSummary, TimeGranularity } from "../../shared/contracts";
 import { api } from "../lib/api";
-import { formatDate, formatDistance, formatDuration, formatElevation, formatSpeed } from "../lib/format";
+import { formatDate, formatDistance, formatDuration, formatElevation, formatPeriod, formatSpeed } from "../lib/format";
 import { RouteMap } from "./RouteMap";
 import { PeriodChart } from "./WeeklyChart";
 
@@ -66,7 +66,7 @@ export function Dashboard({ summary, activities, onSelect, onImport }: { summary
       </section>
 
       <section className="highlight-rail" aria-label="Destacados">
-        <div><span>Mejor {granularity === "week" ? "semana" : granularity === "month" ? "mes" : "año"}</span><strong>{highlights.best ? formatDistance(highlights.best.distanceM) : "—"}</strong><small>{highlights.best?.periodStart ?? "Sin datos"}</small></div>
+        <div><span>Mejor {granularity === "week" ? "semana" : granularity === "month" ? "mes" : "año"}</span><strong>{highlights.best ? formatDistance(highlights.best.distanceM) : "—"}</strong><small>{highlights.best ? formatPeriod(highlights.best.periodStart, granularity) : "Sin datos"}</small></div>
         <div><span>Salida más larga</span><strong>{formatDistance(highlights.longest?.distanceM)}</strong><small>{highlights.longest ? formatDate(highlights.longest.startAt, "short") : "Sin datos"}</small></div>
         <div><span>Último cambio</span><strong>{highlights.change === null ? "—" : `${highlights.change >= 0 ? "+" : ""}${Math.round(highlights.change * 100)} %`}</strong><small>frente al periodo anterior</small></div>
       </section>

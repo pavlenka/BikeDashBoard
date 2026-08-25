@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { ActivitySummary, ActivityTypeFilter, AnalyticsOverview, AnalyticsRecord, TimeGranularity } from "../../shared/contracts";
 import { api } from "../lib/api";
-import { formatDistance, formatDuration, formatElevation, formatSpeed } from "../lib/format";
+import { formatDate, formatDistance, formatDuration, formatElevation, formatGoalPeriod, formatPeriod, formatSpeed } from "../lib/format";
 import { EvolutionChart, type EvolutionMetric, PerformanceScatter } from "./AnalyticsCharts";
 import { RouteMap } from "./RouteMap";
 
@@ -81,7 +81,7 @@ function GoalPanel({ goal }: { goal: AnalyticsOverview["goals"][number] }) {
   ].filter((metric) => metric.target !== null);
   return (
     <article className="goal-panel">
-      <header><span>{goal.period.length === 4 ? "Objetivo anual" : "Objetivo mensual"}</span><strong>{goal.period}</strong></header>
+      <header><span>{goal.period.length === 4 ? "Objetivo anual" : "Objetivo mensual"}</span><strong>{formatGoalPeriod(goal.period)}</strong></header>
       {metrics.map((metric) => {
         const target = metric.target ?? 0;
         const ratio = target ? metric.actual / target : 0;
@@ -178,7 +178,7 @@ export function AnalyticsPage({ activities, onSelect, onConfigure }: { activitie
 
         <section className="analysis-panel analysis-panel--wide season-line">
           <header><div><p className="eyebrow">Evolución</p><h2>La línea de la temporada</h2></div><div className="metric-switch">{(Object.keys(metricLabels) as EvolutionMetric[]).map((value) => <button key={value} className={metric === value ? "active" : ""} onClick={() => setMetric(value)}>{metricLabels[value]}</button>)}</div></header>
-          <EvolutionChart data={overview.timeline} previous={overview.previousTimeline} metric={metric} goalTarget={goalTarget} />
+          <EvolutionChart data={overview.timeline} previous={overview.previousTimeline} metric={metric} granularity={granularity} goalTarget={goalTarget} />
         </section>
 
         <section className="goals-grid">
@@ -188,8 +188,8 @@ export function AnalyticsPage({ activities, onSelect, onConfigure }: { activitie
         <div className="analysis-columns">
           <section className="analysis-panel calendar-panel">
             <header><div><p className="eyebrow">Calendario</p><h2>Días sobre la bici</h2></div><select value={calendarYear} onChange={(event) => setCalendarYear(Number(event.target.value))}>{[...new Set(activities.map((activity) => new Date(activity.startAt).getFullYear()))].sort().map((year) => <option key={year}>{year}</option>)}</select></header>
-            <div className="calendar-grid"><div className="calendar-weekdays">{weekdays.map((day) => <span key={day}>{day}</span>)}</div><div className="ride-calendar">{Array.from({ length: calendarOffset }, (_value, index) => <i key={`offset-${index}`} />)}{calendarDays.map((day) => { const value = calendarValues.get(day); const intensity = value ? Math.max(0.18, value.distanceM / maxCalendarDistance) : 0; return <button key={day} title={`${day}: ${value ? formatDistance(value.distanceM) : "sin salida"}`} style={{ "--intensity": intensity } as React.CSSProperties} className={value ? "active" : ""} onClick={() => value && setSelectedDay(day)} aria-label={`${day}, ${value?.rides ?? 0} salidas`} />; })}</div></div>
-            {selectedDay && <div className="calendar-selection"><span>{selectedDay}</span>{selectedActivities.map((activity) => <button key={activity.id} onClick={() => onSelect(activity.id)}><strong>{formatDistance(activity.distanceM)}</strong><small>{activity.title}</small>→</button>)}</div>}
+            <div className="calendar-grid"><div className="calendar-weekdays">{weekdays.map((day) => <span key={day}>{day}</span>)}</div><div className="ride-calendar">{Array.from({ length: calendarOffset }, (_value, index) => <i key={`offset-${index}`} />)}{calendarDays.map((day) => { const value = calendarValues.get(day); const intensity = value ? Math.max(0.18, value.distanceM / maxCalendarDistance) : 0; const label = formatPeriod(day, "day"); return <button key={day} title={`${label}: ${value ? formatDistance(value.distanceM) : "sin salida"}`} style={{ "--intensity": intensity } as React.CSSProperties} className={value ? "active" : ""} onClick={() => value && setSelectedDay(day)} aria-label={`${label}, ${value?.rides ?? 0} salidas`} />; })}</div></div>
+            {selectedDay && <div className="calendar-selection"><span>{formatPeriod(selectedDay, "day")}</span>{selectedActivities.map((activity) => <button key={activity.id} onClick={() => onSelect(activity.id)}><strong>{formatDistance(activity.distanceM)}</strong><small>{formatDate(activity.startAt, "short")} · {activity.title}</small>→</button>)}</div>}
           </section>
 
           <section className="analysis-panel consistency-panel">
@@ -207,7 +207,7 @@ export function AnalyticsPage({ activities, onSelect, onConfigure }: { activitie
 
         <section className="analysis-panel records-panel">
           <header><div><p className="eyebrow">Marcas personales</p><h2>El listón</h2></div><span>{overview.records.length} referencias</span></header>
-          <div className="records-grid">{overview.records.map((record) => <button key={`${record.key}-${record.periodStart ?? record.activityId}`} disabled={!record.activityId} onClick={() => record.activityId && onSelect(record.activityId)}><span>{record.label}</span><strong>{recordValue(record)}</strong><small>{record.periodStart ?? (record.activityId ? "Abrir salida →" : "")}</small></button>)}</div>
+          <div className="records-grid">{overview.records.map((record) => <button key={`${record.key}-${record.periodStart ?? record.activityId}`} disabled={!record.activityId} onClick={() => record.activityId && onSelect(record.activityId)}><span>{record.label}</span><strong>{recordValue(record)}</strong><small>{record.periodStart ? formatPeriod(record.periodStart, record.key === "day" || record.key === "week" || record.key === "month" || record.key === "year" ? record.key : "day") : (record.activityId ? "Abrir salida →" : "")}</small></button>)}</div>
         </section>
 
         <div className="analysis-columns analysis-columns--balanced">

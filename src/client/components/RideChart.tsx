@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as echarts from "echarts/core";
-import { GridComponent, TooltipComponent } from "echarts/components";
+import { GridComponent, MarkLineComponent, TooltipComponent } from "echarts/components";
 import { LineChart } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 
 import type { RoutePoint } from "../../shared/contracts";
 
-echarts.use([GridComponent, TooltipComponent, LineChart, CanvasRenderer]);
+echarts.use([GridComponent, MarkLineComponent, TooltipComponent, LineChart, CanvasRenderer]);
 
 type RideMetric = "elevationM" | "heartRateBpm" | "speedMps" | "powerW" | "cadenceRpm";
 
@@ -26,6 +26,9 @@ export function RideChart({ points, onHover }: { points: RoutePoint[]; onHover: 
     if (!ref.current) return;
     const chart = echarts.init(ref.current, undefined, { renderer: "canvas" });
     const labels = points.map((point, index) => point.timestamp?.slice(11, 16) ?? String(index + 1));
+    const values = points.map((point) => metrics[metric].value(point) ?? null);
+    const numericValues = values.filter((value): value is number => value !== null);
+    const average = numericValues.length ? numericValues.reduce((total, value) => total + value, 0) / numericValues.length : null;
     chart.setOption({
       animation: false,
       backgroundColor: "transparent",
@@ -49,12 +52,19 @@ export function RideChart({ points, onHover }: { points: RoutePoint[]; onHover: 
         {
           name: metrics[metric].label,
           type: "line",
-          data: points.map((point) => metrics[metric].value(point) ?? null),
+          data: values,
           showSymbol: false,
           smooth: 0.15,
           connectNulls: false,
           lineStyle: { color: metrics[metric].color, width: 2 },
           areaStyle: { color: `${metrics[metric].color}18` },
+          markLine: average === null ? undefined : {
+            silent: true,
+            symbol: "none",
+            lineStyle: { color: "#eef3f4", type: "dashed", width: 1.25, opacity: 0.85 },
+            label: { color: "#eef3f4", fontFamily: "IBM Plex Mono", fontSize: 10, formatter: `Media ${average.toLocaleString("es-ES", { maximumFractionDigits: 1 })} ${metrics[metric].unit}` },
+            data: [{ yAxis: average }],
+          },
         },
       ],
     });

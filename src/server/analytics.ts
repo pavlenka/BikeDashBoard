@@ -85,6 +85,12 @@ function ymd(year: number, month: number, day: number) {
   return `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
 }
 
+export function spanishPeriodLabel(value: string) {
+  if (value.length === 4) return value;
+  return new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric", timeZone: "Europe/Madrid" })
+    .format(new Date(`${value.slice(0, 7)}-01T12:00:00Z`));
+}
+
 export function periodStart(value: string, granularity: TimeGranularity, timezone: string) {
   const parts = localDateParts(value, timezone);
   if (granularity === "year") return String(parts.year);
@@ -583,13 +589,16 @@ function overview(query: {
     `${Math.abs(distanceDelta * 100).toLocaleString("es-ES", { maximumFractionDigits: 0 })} % ${distanceDelta > 0 ? "más" : "menos"} distancia que en el periodo anterior.`,
   );
   const bestMonth = buildSeries(selected, "month", preferences.timezone).sort((a, b) => b.distanceM - a.distanceM)[0];
-  if (bestMonth) insights.push(`${bestMonth.periodStart} es tu mes más largo del periodo, con ${(bestMonth.distanceM / 1000).toLocaleString("es-ES", { maximumFractionDigits: 1 })} km.`);
+  if (bestMonth) {
+    const label = spanishPeriodLabel(bestMonth.periodStart);
+    insights.push(`${label.charAt(0).toUpperCase()}${label.slice(1)} es tu mes más largo del periodo, con ${(bestMonth.distanceM / 1000).toLocaleString("es-ES", { maximumFractionDigits: 1 })} km.`);
+  }
   const newCells = [...selectedCells.keys()].filter((cell) => !historicCells.has(cell)).length;
   if (newCells > 0) insights.push(`Has abierto ${newCells.toLocaleString("es-ES")} celdas nuevas de territorio.`);
   const distanceGoal = goalValues.find((goal) => goal.distanceM);
   if (distanceGoal?.distanceM && distanceGoal.elapsedRatio > 0) {
     const pace = distanceGoal.actual.distanceM / distanceGoal.distanceM - distanceGoal.elapsedRatio;
-    insights.push(`Vas ${pace >= 0 ? "por delante" : "por detrás"} del ritmo de tu objetivo ${distanceGoal.period}.`);
+    insights.push(`Vas ${pace >= 0 ? "por delante" : "por detrás"} del ritmo de tu objetivo de ${spanishPeriodLabel(distanceGoal.period)}.`);
   }
 
   const result: AnalyticsOverview = {
