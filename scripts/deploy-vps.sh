@@ -34,4 +34,4 @@ rsync -az --delete \
   --exclude .DS_Store \
   ./ "${DEPLOY_HOST}:${APP_ROOT}/"
 
-ssh "${DEPLOY_HOST}" "cd '${APP_ROOT}' && BIKE_DOMAIN='${BIKE_DOMAIN}' TRAEFIK_NETWORK='${TRAEFIK_NETWORK_NAME}' docker compose build --pull && BIKE_DOMAIN='${BIKE_DOMAIN}' TRAEFIK_NETWORK='${TRAEFIK_NETWORK_NAME}' docker compose up -d && docker compose ps"
+ssh "${DEPLOY_HOST}" "cd '${APP_ROOT}' && export BIKE_DOMAIN='${BIKE_DOMAIN}' TRAEFIK_NETWORK='${TRAEFIK_NETWORK_NAME}' && docker compose build --pull && docker compose up -d && docker compose ps"
