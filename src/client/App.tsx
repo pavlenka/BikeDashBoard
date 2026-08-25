@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { startRegistration } from "@simplewebauthn/browser";
 import type { PublicKeyCredentialCreationOptionsJSON } from "@simplewebauthn/browser";
 
@@ -42,6 +42,10 @@ export default function App() {
   const [selected, setSelected] = useState<NormalizedCyclingActivityV1 | null>(null);
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useLayoutEffect(() => {
+    if (selected) window.scrollTo(0, 0);
+  }, [selected]);
 
   const loadDashboard = useCallback(async () => {
     const [nextSummary, nextActivities] = await Promise.all([
