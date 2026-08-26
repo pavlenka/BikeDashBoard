@@ -5,6 +5,7 @@ import { LineChart } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 
 import type { RoutePoint } from "../../shared/contracts";
+import { formatTime } from "../lib/format";
 
 echarts.use([GridComponent, MarkLineComponent, TooltipComponent, LineChart, CanvasRenderer]);
 
@@ -25,7 +26,7 @@ export function RideChart({ points, onHover }: { points: RoutePoint[]; onHover: 
   useEffect(() => {
     if (!ref.current) return;
     const chart = echarts.init(ref.current, undefined, { renderer: "canvas" });
-    const labels = points.map((point, index) => point.timestamp?.slice(11, 16) ?? String(index + 1));
+    const labels = points.map((point, index) => point.timestamp ? formatTime(point.timestamp) : String(index + 1));
     const values = points.map((point) => metrics[metric].value(point) ?? null);
     const numericValues = values.filter((value): value is number => value !== null);
     const average = numericValues.length ? numericValues.reduce((total, value) => total + value, 0) / numericValues.length : null;

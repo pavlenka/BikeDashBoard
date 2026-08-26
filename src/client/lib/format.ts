@@ -2,6 +2,12 @@ import type { TimeGranularity } from "../../shared/contracts";
 
 const numberFormat = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 });
 const timezone = "Europe/Madrid";
+const timeFormat = new Intl.DateTimeFormat("es-ES", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: timezone,
+});
 
 export function formatDistance(meters: number | null | undefined) {
   return meters === null || meters === undefined ? "—" : `${numberFormat.format(meters / 1000)} km`;
@@ -33,6 +39,10 @@ export function formatDate(value: string, style: "short" | "long" = "long") {
     ...(style === "long" ? { hour: "2-digit", minute: "2-digit" } : {}),
     timeZone: timezone,
   }).format(new Date(value));
+}
+
+export function formatTime(value: string) {
+  return timeFormat.format(new Date(value));
 }
 
 function periodDate(value: string) {
