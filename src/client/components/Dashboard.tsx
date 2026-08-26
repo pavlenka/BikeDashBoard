@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { ActivitySummary, DashboardSummary, TimeGranularity } from "../../shared/contracts";
 import { api } from "../lib/api";
-import { formatDate, formatDistance, formatDuration, formatElevation, formatPeriod, formatSpeed } from "../lib/format";
+import { formatDate, formatDistance, formatDuration, formatElevation, formatPeriod, formatPeriodLabel, formatSpeed, periodStartForDate } from "../lib/format";
 import { RouteMap } from "./RouteMap";
 import { PeriodChart } from "./WeeklyChart";
 
 export function Dashboard({ summary, activities, onSelect, onImport }: { summary: DashboardSummary; activities: ActivitySummary[]; onSelect: (id: string) => void; onImport: () => void }) {
   const [granularity, setGranularity] = useState<TimeGranularity>("week");
+  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [chartSummary, setChartSummary] = useState(summary);
   useEffect(() => {
     if (granularity === summary.granularity) {
@@ -28,6 +29,12 @@ export function Dashboard({ summary, activities, onSelect, onImport }: { summary
   const latestMapRoutes = useMemo(() => latest?.hasRoute ? [latest.routePreview] : [], [latest]);
   const latestSpeedRoutes = useMemo(() => latest?.hasRoute ? [latest.routeSpeedPreview] : [], [latest]);
   const latestAverageSpeeds = useMemo(() => latest?.hasRoute ? [latest.averageSpeedMps] : [], [latest]);
+  const historyActivities = useMemo(
+    () => selectedPeriod
+      ? activities.filter((activity) => periodStartForDate(activity.startAt, granularity) === selectedPeriod)
+      : activities.slice(0, 8),
+    [activities, granularity, selectedPeriod],
+  );
   if (!activities.length) {
     return (
       <section className="empty-state">
@@ -77,14 +84,14 @@ export function Dashboard({ summary, activities, onSelect, onImport }: { summary
       <section className="content-grid">
         <article className="chart-panel">
           <header><div><p className="eyebrow">Ritmo reciente</p><h2>Distancia por periodo</h2></div><div className="segmented" aria-label="Agrupar resumen">
-            {(["week", "month", "year"] as const).map((value) => <button key={value} className={granularity === value ? "active" : ""} onClick={() => setGranularity(value)}>{value === "week" ? "Semanas" : value === "month" ? "Meses" : "Años"}</button>)}
+            {(["week", "month", "year"] as const).map((value) => <button key={value} className={granularity === value ? "active" : ""} onClick={() => { setGranularity(value); setSelectedPeriod(null); }}>{value === "week" ? "Semanas" : value === "month" ? "Meses" : "Años"}</button>)}
           </div></header>
-          <PeriodChart data={chartSummary.series} granularity={granularity} />
+          <PeriodChart data={chartSummary.series} granularity={granularity} selectedPeriod={selectedPeriod} onSelect={setSelectedPeriod} />
         </article>
         <article className="ride-list-panel">
-          <header><p className="eyebrow">Historial</p><h2>Salidas recientes</h2></header>
+          <header><div><p className="eyebrow">Historial</p><h2>{selectedPeriod ? formatPeriodLabel(selectedPeriod, granularity) : "Salidas recientes"}</h2></div>{selectedPeriod && <button className="ride-list-reset" onClick={() => setSelectedPeriod(null)}>Ver recientes</button>}</header>
           <ol className="ride-list">
-            {activities.slice(0, 8).map((activity) => (
+            {historyActivities.map((activity) => (
               <li key={activity.id}>
                 <button onClick={() => onSelect(activity.id)}>
                   <time>{formatDate(activity.startAt, "short")}</time>
@@ -95,6 +102,7 @@ export function Dashboard({ summary, activities, onSelect, onImport }: { summary
               </li>
             ))}
           </ol>
+          {selectedPeriod && historyActivities.length === 0 && <p className="ride-list-empty">No hay salidas disponibles para este periodo.</p>}
         </article>
       </section>
     </div>

@@ -50,7 +50,32 @@ export function formatRouteCount(count: number) {
 }
 
 function periodDate(value: string) {
-  return new Date(`${value.slice(0, 10)}T12:00:00Z`);
+  const date = value.length === 7 ? `${value}-01` : value.slice(0, 10);
+  return new Date(`${date}T12:00:00Z`);
+}
+
+function ymd(year: number, month: number, day: number) {
+  return `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+}
+
+export function periodStartForDate(value: string, granularity: TimeGranularity) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: timezone,
+  }).formatToParts(new Date(value));
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const year = Number(values.year);
+  const month = Number(values.month);
+  const day = Number(values.day);
+  if (granularity === "year") return String(year);
+  if (granularity === "month") return ymd(year, month, 1).slice(0, 7);
+  if (granularity === "day") return ymd(year, month, day);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const offset = (date.getUTCDay() + 6) % 7;
+  date.setUTCDate(date.getUTCDate() - offset);
+  return ymd(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
 }
 
 export function formatPeriod(value: string, granularity: TimeGranularity, compact = false) {

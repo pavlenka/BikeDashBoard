@@ -9,7 +9,7 @@ import { formatPeriod, formatPeriodLabel, formatRouteCount } from "../lib/format
 
 echarts.use([BarChart, GridComponent, MarkLineComponent, TooltipComponent, CanvasRenderer]);
 
-export function PeriodChart({ data, granularity }: { data: PeriodSeriesPoint[]; granularity: TimeGranularity }) {
+export function PeriodChart({ data, granularity, selectedPeriod, onSelect }: { data: PeriodSeriesPoint[]; granularity: TimeGranularity; selectedPeriod: string | null; onSelect: (periodStart: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!ref.current) return;
@@ -44,7 +44,11 @@ export function PeriodChart({ data, granularity }: { data: PeriodSeriesPoint[]; 
       series: [
         {
           type: "bar",
-          data: distances,
+          data: distances.map((value, index) => ({
+            value,
+            itemStyle: { color: visible[index].periodStart === selectedPeriod ? "#d6e22e" : "#27a8df" },
+          })),
+          cursor: "pointer",
           itemStyle: { color: "#27a8df" },
           emphasis: { itemStyle: { color: "#d6e22e" } },
           barMaxWidth: 26,
@@ -66,12 +70,17 @@ export function PeriodChart({ data, granularity }: { data: PeriodSeriesPoint[]; 
         },
       ],
     });
+    chart.on("click", (event: unknown) => {
+      const index = (event as { dataIndex?: number }).dataIndex;
+      const point = index === undefined ? undefined : visible[index];
+      if (point) onSelect(point.periodStart);
+    });
     const observer = new ResizeObserver(() => chart.resize());
     observer.observe(ref.current);
     return () => {
       observer.disconnect();
       chart.dispose();
     };
-  }, [data, granularity]);
+  }, [data, granularity, onSelect, selectedPeriod]);
   return <div className="weekly-chart" ref={ref} />;
 }

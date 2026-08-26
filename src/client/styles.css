@@ -121,6 +121,9 @@ h2 { font-size: 32px; line-height: 1; letter-spacing: -.015em; }
 .ride-list small { color: var(--graphite); }
 .ride-list i { font-style: normal; color: var(--route); transition: transform .15s ease; }
 .ride-list button:hover i { transform: translateX(4px); }
+.ride-list-reset { border: 0; background: transparent; color: var(--route-dark); padding: 5px 0; cursor: pointer; font-family: "IBM Plex Mono"; font-size: 10px; white-space: nowrap; }
+.ride-list-reset:hover { color: var(--signal); }
+.ride-list-empty { margin: 22px 0 0; color: var(--graphite); }
 
 .page-heading { max-width: 820px; margin: 28px 0 42px; }
 .page-heading h1 { font-size: clamp(54px, 8vw, 100px); margin: 0 0 24px; }

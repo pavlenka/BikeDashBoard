@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatGoalPeriod, formatPeriod, formatPeriodLabel, formatRouteCount, formatTime } from "./format";
+import { formatGoalPeriod, formatPeriod, formatPeriodLabel, formatRouteCount, formatTime, periodStartForDate } from "./format";
 
 describe("formatos de periodo en español", () => {
   it("presenta días y semanas sin formato ISO visible", () => {
@@ -10,8 +10,17 @@ describe("formatos de periodo en español", () => {
 
   it("presenta meses y objetivos con nombres españoles", () => {
     expect(formatPeriod("2026-07-01", "month")).toBe("julio de 2026");
+    expect(formatPeriod("2026-07", "month")).toBe("julio de 2026");
     expect(formatGoalPeriod("2026-07")).toBe("julio de 2026");
     expect(formatGoalPeriod("2026")).toBe("2026");
+  });
+});
+
+describe("asignación local de periodos", () => {
+  it("coincide con semanas, meses y años de Madrid", () => {
+    expect(periodStartForDate("2026-08-20T22:30:00Z", "week")).toBe("2026-08-17");
+    expect(periodStartForDate("2026-08-31T22:30:00Z", "month")).toBe("2026-09");
+    expect(periodStartForDate("2026-12-31T23:30:00Z", "year")).toBe("2027");
   });
 });
 
