@@ -45,6 +45,10 @@ export function formatTime(value: string) {
   return timeFormat.format(new Date(value));
 }
 
+export function formatRouteCount(count: number) {
+  return `${count.toLocaleString("es-ES")} ${count === 1 ? "ruta" : "rutas"}`;
+}
+
 function periodDate(value: string) {
   return new Date(`${value.slice(0, 10)}T12:00:00Z`);
 }

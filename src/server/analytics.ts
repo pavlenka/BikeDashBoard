@@ -510,10 +510,10 @@ function queryRange(from: string | undefined, to: string | undefined, timezone: 
 }
 
 function signature() {
-  const activity = db.prepare("SELECT COALESCE(MAX(updated_at), '') value FROM activities").get() as { value: string };
+  const activity = db.prepare("SELECT COUNT(*) count, COALESCE(MAX(updated_at), '') value FROM activities").get() as { count: number; value: string };
   const preferences = db.prepare("SELECT updated_at value FROM analytics_preferences WHERE id = 1").get() as { value: string };
   const goals = db.prepare("SELECT COALESCE(MAX(updated_at), '') value FROM period_goals").get() as { value: string };
-  return `${activity.value}|${preferences.value}|${goals.value}`;
+  return `${activity.count}:${activity.value}|${preferences.value}|${goals.value}`;
 }
 
 export function dashboardSummary(query: { from?: string; to?: string; groupBy?: TimeGranularity }): DashboardSummary {

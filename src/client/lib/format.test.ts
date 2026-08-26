@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatGoalPeriod, formatPeriod, formatPeriodLabel, formatTime } from "./format";
+import { formatGoalPeriod, formatPeriod, formatPeriodLabel, formatRouteCount, formatTime } from "./format";
 
 describe("formatos de periodo en español", () => {
   it("presenta días y semanas sin formato ISO visible", () => {
@@ -22,5 +22,12 @@ describe("hora local de las rutas", () => {
 
   it("aplica automáticamente el horario de invierno de Madrid", () => {
     expect(formatTime("2026-11-20T05:00:00Z")).toBe("06:00");
+  });
+});
+
+describe("número de rutas", () => {
+  it("presenta correctamente singular y plural", () => {
+    expect(formatRouteCount(1)).toBe("1 ruta");
+    expect(formatRouteCount(3)).toBe("3 rutas");
   });
 });

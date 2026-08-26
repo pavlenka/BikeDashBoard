@@ -5,7 +5,7 @@ import { GridComponent, MarkLineComponent, TooltipComponent } from "echarts/comp
 import { CanvasRenderer } from "echarts/renderers";
 
 import type { PeriodSeriesPoint, TimeGranularity } from "../../shared/contracts";
-import { formatPeriod, formatPeriodLabel } from "../lib/format";
+import { formatPeriod, formatPeriodLabel, formatRouteCount } from "../lib/format";
 
 echarts.use([BarChart, GridComponent, MarkLineComponent, TooltipComponent, CanvasRenderer]);
 
@@ -26,7 +26,7 @@ export function PeriodChart({ data, granularity }: { data: PeriodSeriesPoint[]; 
         formatter: (items: unknown) => {
           const item = (items as Array<{ axisValue: string; dataIndex: number; value: number }>)[0];
           const point = visible[item.dataIndex];
-          return `${formatPeriodLabel(point.periodStart, granularity)}<br><strong>${Number(item.value).toLocaleString("es-ES", { maximumFractionDigits: 1 })} km</strong>`;
+          return `${formatPeriodLabel(point.periodStart, granularity)}<br><strong>${Number(item.value).toLocaleString("es-ES", { maximumFractionDigits: 1 })} km</strong><br>${formatRouteCount(point.rides)}`;
         },
       },
       xAxis: {

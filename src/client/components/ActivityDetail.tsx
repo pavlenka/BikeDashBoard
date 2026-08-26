@@ -9,8 +9,10 @@ function metric(value: number | null, suffix: string) {
   return value === null ? "—" : `${Math.round(value).toLocaleString("es-ES")} ${suffix}`;
 }
 
-export function ActivityDetail({ activity, onBack }: { activity: NormalizedCyclingActivityV1; onBack: () => void }) {
+export function ActivityDetail({ activity, onBack, onDelete }: { activity: NormalizedCyclingActivityV1; onBack: () => void; onDelete: () => Promise<void> }) {
   const [hoverIndex, setHoverIndex] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const onHover = useCallback((index: number) => setHoverIndex(index), []);
   const hovered = activity.route[hoverIndex];
   const route = useMemo(
@@ -20,9 +22,24 @@ export function ActivityDetail({ activity, onBack }: { activity: NormalizedCycli
   const mapRoutes = useMemo(() => [route], [route]);
   const speedRoutes = useMemo(() => [activity.route], [activity.route]);
   const averageSpeeds = useMemo(() => [activity.averageSpeedMps.value], [activity.averageSpeedMps.value]);
+  async function confirmDelete() {
+    if (!window.confirm("¿Eliminar esta salida de forma permanente? Dejará de contar en las estadísticas y no volverá a aparecer al sincronizar.")) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await onDelete();
+    } catch {
+      setDeleteError("No se ha podido eliminar la salida. Inténtalo de nuevo.");
+      setDeleting(false);
+    }
+  }
   return (
     <section className="activity-page">
-      <button className="back-button" onClick={onBack}>← Volver al resumen</button>
+      <div className="activity-actions">
+        <button className="back-button" onClick={onBack}>← Volver al resumen</button>
+        <button className="delete-activity-button" disabled={deleting} onClick={confirmDelete}>{deleting ? "Eliminando…" : "Eliminar salida"}</button>
+      </div>
+      {deleteError && <p className="notice notice--error">{deleteError}</p>}
       <header className="activity-heading">
         <div><p className="eyebrow">{formatDate(activity.startAt)}</p><h1>{formatDistance(activity.distanceM.value)}</h1><span>{activity.title}</span></div>
         <dl>

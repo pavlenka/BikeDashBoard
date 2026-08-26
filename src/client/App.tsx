@@ -40,6 +40,7 @@ export default function App() {
   const [summary, setSummary] = useState(emptySummary);
   const [activities, setActivities] = useState<ActivitySummary[]>([]);
   const [selected, setSelected] = useState<NormalizedCyclingActivityV1 | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -76,9 +77,18 @@ export default function App() {
     setLoading(true);
     try {
       setSelected(await api<NormalizedCyclingActivityV1>(`/api/activities/${id}`));
+      setSelectedId(id);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function deleteSelectedActivity() {
+    if (!selectedId) return;
+    await api<void>(`/api/activities/${selectedId}`, { method: "DELETE" });
+    setSelected(null);
+    setSelectedId(null);
+    await loadDashboard();
   }
 
   async function addPasskey() {
@@ -115,7 +125,7 @@ export default function App() {
 
       <main className="main-content">
         {selected ? (
-          <ActivityDetail activity={selected} onBack={() => setSelected(null)} />
+          <ActivityDetail activity={selected} onBack={() => setSelected(null)} onDelete={deleteSelectedActivity} />
         ) : view === "dashboard" ? (
           <Dashboard summary={summary} activities={activities} onSelect={selectActivity} onImport={() => setView("import")} />
         ) : view === "analytics" ? (

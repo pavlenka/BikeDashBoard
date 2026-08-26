@@ -77,8 +77,12 @@ export function upsertActivity(
   importId: string,
   activity: NormalizedCyclingActivityV1,
   { updateImportMarker = true }: { updateImportMarker?: boolean } = {},
-) {
+): "created" | "updated" | "ignored" {
   assertActivity(activity);
+  const excluded = db
+    .prepare("SELECT 1 FROM excluded_activities WHERE source_id = ?")
+    .get(activity.sourceId);
+  if (excluded) return "ignored";
   const existing = db
     .prepare("SELECT id, created_at FROM activities WHERE source_id = ?")
     .get(activity.sourceId) as { id: string; created_at: string } | undefined;
@@ -155,6 +159,22 @@ export function upsertActivity(
   ).run(id, DATA_SCHEMA_VERSION, gzipSync(Buffer.from(JSON.stringify(activity))));
 
   return existing ? "updated" : "created";
+}
+
+export function excludeActivity(id: string) {
+  const activity = db
+    .prepare("SELECT source_id sourceId FROM activities WHERE id = ?")
+    .get(id) as { sourceId: string } | undefined;
+  if (!activity) return false;
+
+  db.transaction(() => {
+    db.prepare(
+      `INSERT INTO excluded_activities(source_id, deleted_at) VALUES (?, ?)
+       ON CONFLICT(source_id) DO UPDATE SET deleted_at=excluded.deleted_at`,
+    ).run(activity.sourceId, new Date().toISOString());
+    db.prepare("DELETE FROM activities WHERE id = ?").run(id);
+  })();
+  return true;
 }
 
 export async function registerActivityRoutes(app: FastifyInstance) {
@@ -291,6 +311,17 @@ export async function registerActivityRoutes(app: FastifyInstance) {
         .get(request.params.id) as { payload_gzip: Buffer } | undefined;
       if (!row) return reply.code(404).send({ error: "activity_not_found" });
       return JSON.parse(gunzipSync(row.payload_gzip).toString("utf8"));
+    },
+  );
+
+  app.delete<{ Params: { id: string } }>(
+    "/api/activities/:id",
+    { preHandler: requireSession },
+    async (request, reply) => {
+      if (!excludeActivity(request.params.id)) {
+        return reply.code(404).send({ error: "activity_not_found" });
+      }
+      return reply.code(204).send();
     },
   );
 }

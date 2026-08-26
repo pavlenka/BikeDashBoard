@@ -427,6 +427,7 @@ export async function registerHealthAutoExportRoutes(app: FastifyInstance) {
       const importId = randomUUID();
       let created = 0;
       let updated = 0;
+      let excluded = 0;
       try {
         db.transaction(() => {
           const now = new Date().toISOString();
@@ -447,7 +448,8 @@ export async function registerHealthAutoExportRoutes(app: FastifyInstance) {
           activities.forEach((activity) => {
             const result = upsertActivity(importId, activity, { updateImportMarker: false });
             if (result === "created") created += 1;
-            else updated += 1;
+            else if (result === "updated") updated += 1;
+            else excluded += 1;
           });
         })();
       } catch (error) {
@@ -456,10 +458,10 @@ export async function registerHealthAutoExportRoutes(app: FastifyInstance) {
       }
 
       return {
-        accepted: activities.length,
+        accepted: created + updated,
         created,
         updated,
-        ignored: workouts.length - cycling.length,
+        ignored: workouts.length - cycling.length + excluded,
       };
     },
   );

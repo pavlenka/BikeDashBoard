@@ -91,6 +91,11 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS activities_start_at_idx ON activities(start_at DESC);
   CREATE INDEX IF NOT EXISTS activities_seen_import_idx ON activities(seen_import_id);
 
+  CREATE TABLE IF NOT EXISTS excluded_activities (
+    source_id TEXT PRIMARY KEY,
+    deleted_at TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS activity_payloads (
     activity_id TEXT PRIMARY KEY REFERENCES activities(id) ON DELETE CASCADE,
     schema_version TEXT NOT NULL,

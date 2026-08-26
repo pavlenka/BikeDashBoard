@@ -180,7 +180,11 @@ h2 { font-size: 32px; line-height: 1; letter-spacing: -.015em; }
 .route-table__open button:hover { color: var(--signal); transform: translateX(3px); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-.back-button { background: none; border: 0; padding: 0; color: var(--route-dark); cursor: pointer; margin: 8px 0 34px; }
+.activity-actions { min-height: 42px; margin: 8px 0 34px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.back-button { background: none; border: 0; padding: 0; color: var(--route-dark); cursor: pointer; }
+.delete-activity-button { border: 1px solid #8f2d37; background: transparent; color: #bd4856; padding: 9px 13px; cursor: pointer; font-family: "IBM Plex Mono"; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+.delete-activity-button:hover { background: #8f2d37; color: var(--ink); }
+.delete-activity-button:disabled { opacity: .55; cursor: wait; }
 .activity-heading { display: flex; justify-content: space-between; align-items: end; margin-bottom: 28px; }
 .activity-heading h1 { margin: 0 0 8px; }
 .activity-heading > div > span { color: var(--graphite); }
